@@ -50,7 +50,7 @@ mouse_sensitivity = Vec2(40, 40)
 camera_vertical_angle = 0
 
 # Zet het gezichtsveld (FOV) van de camera groter
-camera.fov = 110
+camera.fov = 120
 
 speed = 5
 score = 0
@@ -79,8 +79,6 @@ def reset_game():
     invincible_timer = 0
     can_double_jump = False
     has_double_jumped = False
-    for coin in coins:
-        coin.enabled = True
     for powerup in powerups:
         powerup.enabled = True
 
@@ -96,17 +94,6 @@ def input(key):
 mouse.locked = True  # Lock direct bij start
 
 # --- NIEUWE FEATURES VARIABELEN EN STRUCTUREN ---
-# Verzamelobjecten (munten)
-coins = []
-coin_positions = [
-    (2, 2, 2),
-    (-3, 5, 1),
-    (4, 8, -2),
-    (1, 12, 4),
-]
-for pos in coin_positions:
-    coins.append(Entity(model='sphere', color=color.yellow, scale=0.5, position=pos, collider='box'))
-
 # Power-ups
 powerups = []
 powerup_types = ['speed', 'invincible']
@@ -117,15 +104,6 @@ powerup_positions = [
 for i, pos in enumerate(powerup_positions):
     color_choice = color.cyan if powerup_types[i] == 'speed' else color.red
     powerups.append(Entity(model='cube', color=color_choice, scale=0.7, position=pos, collider='box', texture=None))
-
-# Vijanden
-enemies = []
-enemy_positions = [
-    (0, 6, 0),
-    (5, 14, 2),
-]
-for pos in enemy_positions:
-    enemies.append(Entity(model='cube', color=color.red, scale=1, position=pos, collider='box'))
 
 # Bewegende platforms (obstakels)
 mov_platforms = []
@@ -150,7 +128,7 @@ current_time = level_time
 time_text = Text(text=f'Tijd: {int(current_time)}', origin=(0,7), scale=1.5, background=True, position=(-0.7,0.45))
 
 # Simpel verhaal/missie
-story_text = Text(text='Missie: Bereik het groene platform en verzamel alle munten!', origin=(0,6), scale=1.2, background=True, position=(-0.7,0.4))
+story_text = Text(text='Missie: Bereik het groene platform!', origin=(0,6), scale=1.2, background=True, position=(-0.7,0.4))
 # ---------------------------------------------------
 
 def update():
@@ -217,12 +195,6 @@ def update():
         if plat.x > 6 or plat.x < -6:
             mov_platforms_dir[i] *= -1
 
-    # Munten verzamelen
-    for coin in coins:
-        if coin.enabled and player.intersects(coin).hit:
-            coin.enabled = False
-            score += 10
-
     # Power-ups
     global speed_boost_timer, invincible_timer
     for i, powerup in enumerate(powerups):
@@ -246,15 +218,6 @@ def update():
         invincible_timer -= time.dt
         if invincible_timer <= 0:
             player.color = color.orange
-
-    # Vijanden
-    for enemy in enemies:
-        if player.intersects(enemy).hit:
-            if 'invincible_timer' not in globals() or invincible_timer <= 0:
-                score_text.text = 'Game Over! Je bent geraakt door een vijand.'
-                reset_button.visible = True
-                won = True
-                return
 
     # Bewegende platforms collision
     for plat in mov_platforms:
@@ -288,10 +251,10 @@ def update():
     if score > highscore:
         highscore = score
 
-    # Winconditie: alle munten en doelplatform
-    if player.intersects(target_platform).hit and all(not c.enabled for c in coins):
+    # Winconditie: alleen doelplatform
+    if player.intersects(target_platform).hit:
         won = True
-        score_text.text = f'Gefeliciteerd! Je hebt alles gehaald! Score: {score} (Highscore: {highscore})'
+        score_text.text = f'Gefeliciteerd! Je hebt het gehaald! Score: {score} (Highscore: {highscore})'
         score_text.background = True
         score_text.color = color.lime
         reset_button.visible = True
