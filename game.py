@@ -62,7 +62,7 @@ reset_button = Button(text='Opnieuw spelen', color=color.azure, scale=(0.2,0.1),
 
 # Reset-functie
 def reset_game():
-    global won, score, current_time, speed_boost_timer, invincible_timer, can_double_jump, has_double_jumped
+    global won, score
     player.position = (0,1,0)
     player.y_velocity = 0
     camera_vertical_angle = 0
@@ -74,13 +74,6 @@ def reset_game():
     won = False
     reset_button.visible = False
     score = 0
-    current_time = level_time
-    speed_boost_timer = 0
-    invincible_timer = 0
-    can_double_jump = False
-    has_double_jumped = False
-    for powerup in powerups:
-        powerup.enabled = True
 
 reset_button.on_click = reset_game
 
@@ -93,42 +86,20 @@ def input(key):
 
 mouse.locked = True  # Lock direct bij start
 
-# --- NIEUWE FEATURES VARIABELEN EN STRUCTUREN ---
-# Power-ups
-powerups = []
-powerup_types = ['speed', 'invincible']
-powerup_positions = [
-    (-2, 3, 0),
-    (3, 11, 3),
-]
-for i, pos in enumerate(powerup_positions):
-    color_choice = color.cyan if powerup_types[i] == 'speed' else color.red
-    powerups.append(Entity(model='cube', color=color_choice, scale=0.7, position=pos, collider='box', texture=None))
-
-# Bewegende platforms (obstakels)
-mov_platforms = []
-mov_platforms.append(Entity(model='cube', color=color.violet, scale=(3,1,3), position=(0,9,6), collider='box'))
-mov_platforms_dir = [1]
-
 # Highscore en score
 highscore = 0
 
 # Power-up timers
-speed_boost_timer = 0
-invincible_timer = 0
+# speed_boost_timer = 0
+# invincible_timer = 0
 
 # Dubbel springen
 can_double_jump = False
 has_double_jumped = False
 
-# Tijdslimiet
-level_time = 60  # seconden
-current_time = level_time
-
-time_text = Text(text=f'Tijd: {int(current_time)}', origin=(0,7), scale=1.5, background=True, position=(-0.7,0.45))
 
 # Simpel verhaal/missie
-story_text = Text(text='Missie: Bereik het groene platform!', origin=(0,6), scale=1.2, background=True, position=(-0.7,0.4))
+story_text = Text(text='Missie: Bereik het groene platform!', origin=(0,6), scale=1.2, background=True, position=(-0.15,0.4))
 # ---------------------------------------------------
 
 def update():
@@ -188,44 +159,6 @@ def update():
         score_text.color = color.lime
         reset_button.visible = True
 
-    # --- NIEUWE FEATURES LOGICA ---
-    # Bewegende platforms
-    for i, plat in enumerate(mov_platforms):
-        plat.x += mov_platforms_dir[i] * time.dt * 2
-        if plat.x > 6 or plat.x < -6:
-            mov_platforms_dir[i] *= -1
-
-    # Power-ups
-    global speed_boost_timer, invincible_timer
-    for i, powerup in enumerate(powerups):
-        if powerup.enabled and player.intersects(powerup).hit:
-            if powerup_types[i] == 'speed':
-                speed_boost_timer = 5
-                player.color = color.cyan
-            elif powerup_types[i] == 'invincible':
-                invincible_timer = 5
-                player.color = color.red
-            powerup.enabled = False
-
-    # Power-up timers
-    if speed_boost_timer > 0:
-        speed = 10
-        speed_boost_timer -= time.dt
-        if speed_boost_timer <= 0:
-            speed = 5
-            player.color = color.orange
-    if invincible_timer > 0:
-        invincible_timer -= time.dt
-        if invincible_timer <= 0:
-            player.color = color.orange
-
-    # Bewegende platforms collision
-    for plat in mov_platforms:
-        if player.intersects(plat).hit and player.y_velocity <= 0 and player.y > plat.world_y:
-            player.y = plat.world_y + player.scale_y / 2 + 0.01
-            player.y_velocity = 0
-            on_ground = True
-
     # Dubbel springen
     if on_ground:
         can_double_jump = True
@@ -234,17 +167,6 @@ def update():
         player.y_velocity = jump_force
         has_double_jumped = True
         can_double_jump = False
-
-    # Tijdslimiet
-    global current_time
-    if not won:
-        current_time -= time.dt
-        time_text.text = f'Tijd: {int(current_time)}'
-        if current_time <= 0:
-            score_text.text = 'Game Over! Tijd is op.'
-            reset_button.visible = True
-            won = True
-            return
 
     # Highscore
     global highscore
